@@ -26,7 +26,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            
+            "qvio_ned_to_enu = maddrone.qvio_ned_to_enu:main",
         ],
     },
 )

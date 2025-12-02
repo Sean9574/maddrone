@@ -42,6 +42,19 @@ def joint_state_publisher_node():
         ],
     )
 
+def qvio_ned_to_enu():
+    return Node(
+        package="maddrone",
+        executable="qvio_ned_to_enu",
+        name="qvio_ned_to_enu",
+        output="screen",
+        parameters=[{
+            'input_odom_topic': '/qvio/odom',
+            'output_odom_topic': '/qvio_enu',
+        }]
+    )
+
+
 
 def ekf_odom():
     return Node(
@@ -72,4 +85,5 @@ def generate_launch_description():
     ld.add_action(joint_state_publisher_node())
     ld.add_action(rviz_node())
     ld.add_action(ekf_odom())
+    ld.add_action(qvio_ned_to_enu())
     return ld
