@@ -1,0 +1,64 @@
+##############################
+# VSCode
+##############################
+.vscode/
+**/.vscode/
+*.db
+*.sqlite
+*.sqlite3
+*.pdb
+*.ldb
+
+##############################
+# Logs
+##############################
+log/
+**/log/
+*.log
+*.bag
+*.bag.active
+*.bag.tmp
+
+##############################
+# ROS2 / colcon build outputs
+##############################
+build/
+install/
+log/
+build*/ 
+install*/ 
+log*/
+
+##############################
+# Python
+##############################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.pyo
+*.pdb
+
+##############################
+# CMake
+##############################
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake
+Makefile
+
+##############################
+# JetBrains / IDEs
+##############################
+.idea/
+
+##############################
+# Misc
+##############################
+*.swp
+*.swo
+*.tmp
+*.cache
+.DS_Store
