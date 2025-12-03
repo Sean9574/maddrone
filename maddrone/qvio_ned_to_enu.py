@@ -2,11 +2,12 @@
 
 import numpy as np
 import rclpy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from scipy.spatial.transform import Rotation
+from tf2_ros import TransformBroadcaster
 
 
 class QVIONedToEnuTransform(Node):
@@ -25,12 +26,14 @@ class QVIONedToEnuTransform(Node):
         self.declare_parameter('output_odom_topic', '/qvio_enu')
         self.declare_parameter('output_frame_id', 'odom')
         self.declare_parameter('output_child_frame_id', 'base_link')
+        self.declare_parameter('body_frame_rotation_deg', -90.0)  # Rotation to align body frame (X forward)
         
         # Get parameters
         input_topic = self.get_parameter('input_odom_topic').value
         output_topic = self.get_parameter('output_odom_topic').value
         self.output_frame_id = self.get_parameter('output_frame_id').value
         self.output_child_frame_id = self.get_parameter('output_child_frame_id').value
+        body_rotation_deg = self.get_parameter('body_frame_rotation_deg').value
         
         # Create QoS profile with BEST_EFFORT to match ekf_filter_node
         qos_profile = QoSProfile(
@@ -43,7 +46,6 @@ class QVIONedToEnuTransform(Node):
         # ENU has X=East, Y=North, Z=Up
         # NED has X=North, Y=East, Z=Down
         # Transformation: [E, N, U] = [Y, X, -Z] from NED
-        # With corrected signs for orientation
         self.R_ned_to_enu = np.array([
             [0,  1,  0],   # ENU_x = NED_y (East)
             [1,  0,  0],   # ENU_y = NED_x (North)  
@@ -57,8 +59,11 @@ class QVIONedToEnuTransform(Node):
             [ 0,  0,  1]
         ])
         
-        # Combined transformation
+        # Combined transformation (for position and velocity)
         self.R_combined = self.R_fix @ self.R_ned_to_enu
+        
+        # Body frame alignment as quaternion rotation (applied in ENU frame AFTER transform)
+        self.body_frame_rotation = Rotation.from_euler('z', body_rotation_deg, degrees=True)
         
         # Create subscriber with BEST_EFFORT
         self.odom_sub = self.create_subscription(
@@ -75,10 +80,18 @@ class QVIONedToEnuTransform(Node):
             qos_profile
         )
         
+        # Create TF broadcaster to publish odom->base_link transform
+        self.tf_broadcaster = TransformBroadcaster(self)
+        
+        # Store initial position offset to reset to 0,0,0
+        self.initial_position = None
+        self.position_offset_set = False
+        
         self.get_logger().info('QVIO NED to ENU Transform Node Started')
         self.get_logger().info(f'Input topic: {input_topic}')
         self.get_logger().info(f'Output topic: {output_topic}')
         self.get_logger().info(f'Output frame: {self.output_frame_id}')
+        self.get_logger().info(f'Body frame rotation: {body_rotation_deg}°')
         
     def transform_position(self, ned_pos):
         """Transform position from NED to ENU"""
@@ -88,18 +101,24 @@ class QVIONedToEnuTransform(Node):
     
     def transform_quaternion(self, ned_quat):
         """
-        Transform quaternion from NED to ENU frame
+        Transform quaternion from NED to ENU frame, then apply body frame alignment
         """
         # Convert NED quaternion to rotation matrix
         r_ned = Rotation.from_quat([ned_quat[0], ned_quat[1], ned_quat[2], ned_quat[3]])
         R_body_ned = r_ned.as_matrix()
         
-        # Transform to ENU frame with fix: R_body_enu = R_combined * R_body_ned * R_combined^T
+        # Transform to ENU frame: R_body_enu = R_combined * R_body_ned * R_combined^T
         R_body_enu = self.R_combined @ R_body_ned @ self.R_combined.T
         
-        # Convert back to quaternion
+        # Convert to rotation object
         r_enu = Rotation.from_matrix(R_body_enu)
-        enu_quat = r_enu.as_quat()  # Returns [x, y, z, w]
+        
+        # Apply body frame rotation AFTER transform
+        # This rotates the body frame to align with the desired orientation
+        r_final = r_enu * self.body_frame_rotation
+        
+        # Convert back to quaternion
+        enu_quat = r_final.as_quat()  # Returns [x, y, z, w]
         
         return enu_quat.tolist()
     
@@ -129,9 +148,16 @@ class QVIONedToEnuTransform(Node):
         ]
         enu_pos = self.transform_position(ned_pos)
         
-        odom_enu.pose.pose.position.x = enu_pos[0]
-        odom_enu.pose.pose.position.y = enu_pos[1]
-        odom_enu.pose.pose.position.z = enu_pos[2]
+        # Store first position as offset and subtract from all subsequent positions
+        if not self.position_offset_set:
+            self.initial_position = enu_pos.copy()
+            self.position_offset_set = True
+            self.get_logger().info(f'Initial position offset: {self.initial_position}')
+        
+        # Apply offset to center at 0,0,0
+        odom_enu.pose.pose.position.x = enu_pos[0] - self.initial_position[0]
+        odom_enu.pose.pose.position.y = enu_pos[1] - self.initial_position[1]
+        odom_enu.pose.pose.position.z = enu_pos[2] - self.initial_position[2]
         
         # Transform orientation (quaternion)
         ned_quat = [
@@ -177,6 +203,26 @@ class QVIONedToEnuTransform(Node):
         
         # Publish transformed odometry
         self.odom_pub.publish(odom_enu)
+        
+        # Broadcast TF transform from odom to base_link
+        transform = TransformStamped()
+        transform.header.stamp = odom_enu.header.stamp
+        transform.header.frame_id = self.output_frame_id
+        transform.child_frame_id = self.output_child_frame_id
+        
+        # Copy position
+        transform.transform.translation.x = odom_enu.pose.pose.position.x
+        transform.transform.translation.y = odom_enu.pose.pose.position.y
+        transform.transform.translation.z = odom_enu.pose.pose.position.z
+        
+        # Copy orientation
+        transform.transform.rotation.x = odom_enu.pose.pose.orientation.x
+        transform.transform.rotation.y = odom_enu.pose.pose.orientation.y
+        transform.transform.rotation.z = odom_enu.pose.pose.orientation.z
+        transform.transform.rotation.w = odom_enu.pose.pose.orientation.w
+        
+        # Broadcast the transform
+        self.tf_broadcaster.sendTransform(transform)
 
 
 def main(args=None):

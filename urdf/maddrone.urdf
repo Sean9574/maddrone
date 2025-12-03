@@ -4,7 +4,7 @@
   <!-- Root link -->
   <link name="base_link">
     <inertial>
-      <origin xyz="5.0876852591021E-05 0.0052648064453475 0.00285061784540844" rpy="0 0 0" />
+      <origin xyz="5.0876852591021E-05 0.0052648064453475 0.00285061784540844" rpy="0 0 1.5707963267949" />
       <mass value="0.148626416216048" />
       <inertia
         ixx="5.24839058182062E-05"
@@ -16,7 +16,7 @@
     </inertial>
 
     <visual>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5707963267949" />
       <geometry>
 
         <mesh filename="package://maddrone/meshes/Starling2_noguards.stl"
@@ -28,7 +28,7 @@
     </visual>
 
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0" rpy="0 0 1.5707963267949" />
       <geometry>
         <mesh filename="package://maddrone/meshes/Starling2_noguards.stl"
           scale="0.001 0.001 0.001" />

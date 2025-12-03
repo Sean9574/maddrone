@@ -17,6 +17,21 @@ with open(urdf_path, "r") as f:
 maddrone_description_share_dir = get_package_share_directory("maddrone")
 
 
+
+def qvio_ned_to_enu():
+    return Node(
+        package="maddrone",
+        executable="qvio_ned_to_enu",
+        name="qvio_ned_to_enu",
+        output="screen",
+        parameters=[{
+            'input_odom_topic': '/qvio/odom',
+            'output_odom_topic': '/qvio_enu',
+        }]
+    )
+
+
+
 def robot_state_publisher_node():
     return Node(
         package="robot_state_publisher",
@@ -42,17 +57,6 @@ def joint_state_publisher_node():
         ],
     )
 
-def qvio_ned_to_enu():
-    return Node(
-        package="maddrone",
-        executable="qvio_ned_to_enu",
-        name="qvio_ned_to_enu",
-        output="screen",
-        parameters=[{
-            'input_odom_topic': '/qvio/odom',
-            'output_odom_topic': '/qvio_enu',
-        }]
-    )
 
 
 
