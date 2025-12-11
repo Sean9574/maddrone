@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="Starling2">
+
+  <!-- Root link -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="5.0876852591021E-05 0.0052648064453475 0.00285061784540844" rpy="0 0 1.5707963267948966" />
+      <mass value="0.148626416216048" />
+      <inertia
+        ixx="5.24839058182062E-05"
+        ixy="9.32642886147716E-08"
+        ixz="-2.73266782151468E-08"
+        iyy="0.000115973827038946"
+        iyz="5.23635077793091E-08"
+        izz="7.59475063162581E-05" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 1.5707963267948966" />
+      <geometry>
+
+        <mesh filename="package://maddrone/meshes/Starling2_noguards.stl"
+          scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 1.5707963267948966" />
+      <geometry>
+        <mesh filename="package://maddrone/meshes/Starling2_noguards.stl"
+          scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- =========================
+       Sensor/auxiliary frames
+       (massless links + fixed joints)
+       Angles are in RADIANS.
+       ========================= -->
+  <!-- Odom frame (world reference) -->
+  <!-- <link name="odom"/>
+
+  <joint name="odom_to_base_link" type="fixed">
+    <parent link="odom"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint> -->
+
+  <link name="qvio_link" />
+  <joint name="base_link_to_qvio_link" type="fixed">
+    <parent link="base_link" />
+    <child link="qvio_link" />
+    <origin xyz="0 0 0" rpy="0 0 1.5707963267948966" />
+  </joint>
+
+  <!-- IMUs relative to base_link (ModalAI "body") -->
+  <link name="imu_apps" />
+  <joint name="base_link_to_imu_apps" type="fixed">
+    <parent link="base_link" />
+    <child link="imu_apps" />
+    <origin xyz="0.0295 -0.0065 -0.016" rpy="0 0 0" />
+  </joint>
+
+  <link name="imu_px4" />
+  <joint name="base_link_to_imu_px4" type="fixed">
+    <parent link="base_link" />
+    <child link="imu_px4" />
+    <origin xyz="0.0043 0.0073 -0.0163" rpy="0 0 0" />
+  </joint>
+
+  <!-- ToF & ground relative to base_link -->
+  <link name="tof" />
+  <joint name="base_link_to_tof" type="fixed">
+    <parent link="base_link" />
+    <child link="tof" />
+    <origin xyz="-0.01 -0.065 0.040" rpy=" 0 0 0" />
+  </joint>
+
+  <!-- Point cloud frame anchored to the ToF sensor -->
+  <link name="tof_pc" />
+  <joint name="tof_to_tof_pc" type="fixed">
+    <parent link="tof" />
+    <child link="tof_pc" />
+    <!-- Same pose as the ToF sensor; change if your PC needs an offset -->
+    <origin xyz="0 0 0" rpy="3.141592653589793 1.5707963267948966 3.141592653589793" />
+  </joint>
+
+  <link name="ground" />
+  <joint name="base_link_to_ground" type="fixed">
+    <parent link="base_link" />
+    <child link="ground" />
+    <origin xyz="0 0 0.033" rpy="0 0 0" />
+  </joint>
+
+  <!-- Cameras relative to imu_apps -->
+  <link name="tracking_front" />
+  <joint name="imu_apps_to_tracking_front" type="fixed">
+    <parent link="imu_apps" />
+    <child link="tracking_front" />
+    <!-- (0,90,90)° -> (0, 1.5707963267948966, 1.5707963267948966) -->
+    <origin xyz="0.037 0 0.0006" rpy="0 1.5707963267948966 1.5707963267948966" />
+  </joint>
+
+  <link name="tracking_down" />
+  <joint name="imu_apps_to_tracking_down" type="fixed">
+    <parent link="imu_apps" />
+    <child link="tracking_down" />
+    <!-- (0,0,180)° -> (0, 0, 3.141592653589793) -->
+    <origin xyz="-0.08825 -0.0045 0.0269" rpy="0 0 3.141592653589793" />
+  </joint>
+
+  <link name="tracking_rear" />
+  <joint name="imu_apps_to_tracking_rear" type="fixed">
+    <parent link="imu_apps" />
+    <child link="tracking_rear" />
+    <!-- (0,-90,-90)° -> (0, -1.5707963267948966, -1.5707963267948966) -->
+    <origin xyz="-0.092 0.016 0.0036" rpy="0 -1.5707963267948966 -1.5707963267948966" />
+  </joint>
+
+  <link name="hires" />
+  <joint name="imu_apps_to_hires" type="fixed">
+    <parent link="imu_apps" />
+    <child link="hires" />
+    <!-- (0,90,90)° -->
+    <origin xyz="0.0388 0 0.0186" rpy="0 1.5707963267948966 1.5707963267948966" />
+  </joint>
+
+  <link name="lepton0_raw" />
+  <joint name="imu_apps_to_lepton0_raw" type="fixed">
+    <parent link="imu_apps" />
+    <child link="lepton0_raw" />
+    <!-- (0,0,90)° -> (0, 0, 1.5707963267948966) -->
+    <origin xyz="-0.0846 0.0128 0.0242" rpy="0 0 1.5707963267948966" />
+  </joint>
+
+  <!-- Convenience frames -->
+  <link name="camera_left" />
+  <joint name="tracking_front_to_camera_left" type="fixed">
+    <parent link="tracking_front" />
+    <child link="camera_left" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="camera_right" />
+  <joint name="tracking_down_to_camera_right" type="fixed">
+    <parent link="tracking_down" />
+    <child link="camera_right" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="camera_rgb" />
+  <joint name="hires_to_camera_rgb" type="fixed">
+    <parent link="hires" />
+    <child link="camera_rgb" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="camera_depth" />
+  <joint name="tof_to_camera_depth" type="fixed">
+    <parent link="tof" />
+    <child link="camera_depth" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+</robot>
