@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             "qvio_ned_to_enu = maddrone.qvio_ned_to_enu:main",
+            'rgb_compression = maddrone.rgb_compression:main',
         ],
     },
 )

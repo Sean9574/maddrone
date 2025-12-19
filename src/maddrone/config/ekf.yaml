@@ -4,7 +4,7 @@ ekf_filter_node:
     sensor_timeout: 0.1
     two_d_mode: false
     
-    transform_time_offset: 0.0
+    transform_time_offset: 0.1
     transform_timeout: 0.0
     
     print_diagnostics: true
@@ -21,36 +21,26 @@ ekf_filter_node:
     # QVIO odometry input
     odom0: /qvio_enu
     odom0_config: [true,  true,  true,    # x, y, z position
-                   false, false, false,   # roll, pitch, yaw orientation  
+                   true,  true,  true,   # roll, pitch, yaw orientation  
                    true,  true,  true,    # x, y, z velocity
-                   false, false, false,   # roll, pitch, yaw velocity
-                   false, false, false]   # x, y, z acceleration
+                   true,  true,  true,   # roll, pitch, yaw velocity
+                   true,  true,  true]   # x, y, z acceleration
     odom0_differential: false
     odom0_relative: false
     odom0_queue_size: 10
+
     
-    # Scanmatcher odometry input
-    odom1: /scanmatcher/odom
-    odom1_config: [true,  true,  true,    # x, y, z position
-                   false, false, true,    # roll, pitch, yaw (use yaw from scan matching)
-                   false, false, false,   # velocities
-                   false, false, false,   # angular velocities
-                   false, false, false]   # accelerations
-    odom1_differential: false
-    odom1_relative: false
-    odom1_queue_size: 10
-    
-    # IMU input (if you want to use it)
-    # imu0: /imu_apps
-    # imu0_config: [false, false, false,
-    #               true,  true,  true,    # roll, pitch, yaw orientation
-    #               false, false, false,
-    #               true,  true,  true,    # angular velocities
-    #               false, false, false]
-    # imu0_differential: false
-    # imu0_relative: false
-    # imu0_queue_size: 10
-    # imu0_remove_gravitational_acceleration: true
+    # IMU input 
+    imu0: /imu_apps
+    imu0_config: [false, false, false,
+                  true, true, true,    # roll, pitch, yaw orientation
+                  true, true, true,
+                  false, false, false,    # angular velocities
+                  true, true, true]   
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
     
     # Process noise covariance
     process_noise_covariance: [0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,
