@@ -1,0 +1,161 @@
+
+rtabmap:
+  ros__parameters:
+    # Frame configuration
+    frame_id: "base_link"           # Robot base frame
+    odom_frame_id: "odom"           # Odometry frame (EKF publishes odom→base_link)
+    map_frame_id: "map"             # Map frame (RTAB-Map publishes map→odom)
+    
+    # Input configuration - Point Cloud Mode
+    subscribe_stereo: false
+    subscribe_rgb: false
+    subscribe_depth: false
+    subscribe_scan: false
+    subscribe_odom: true          # CHANGED: Enable scan subscription
+    subscribe_scan_cloud: true
+    subscribe_odom_info: false
+    subscribe_depth_cloud: false
+    
+    # Synchronization
+    approx_sync: true
+    queue_size: 30
+    wait_for_transform: 0.2         # Wait up to 0.2s for TF transforms
+    
+    # Transform
+    publish_tf: true  # Publishes map→odom transform ONLY
+    tf_delay: 0.05    # Delay before publishing TF (to avoid conflicts)
+    
+    # Database
+    database_path: ""  # Empty = use ~/.ros/rtabmap.db
+    
+    # =============================================================================
+    # RTAB-Map Parameters
+    # =============================================================================
+    
+    # Memory Management
+    Mem/IncrementalMemory: "true"           # Incremental SLAM mode
+    Mem/InitWMWithAllNodes: "false"         # Don't load all nodes at start
+    Mem/NotLinkedNodesKept: "false"         # Remove unlinked nodes
+    Mem/STMSize: "30"                       # Short-term memory size
+    Mem/RehearsalSimilarity: "0.45"         # Loop closure similarity threshold
+    
+    # Detection Rate
+    Rtabmap/DetectionRate: "1"              # Process every frame (Hz)
+    Rtabmap/TimeThr: "700"                  # Maximum time for processing (ms)
+    
+    # Point Cloud Processing
+    Mem/LaserScanVoxelSize: "0.05"          # Voxel filter for input scans (m)
+    Mem/LaserScanNormalK: "10"              # K neighbors for normal computation
+    
+    # RGBD Parameters (Metric SLAM)
+    RGBD/Enabled: "true"                    # Enable metric SLAM (even for point clouds only)
+    RGBD/NeighborLinkRefining: "true"       # Refine odometry constraints
+    RGBD/ProximityBySpace: "true"           # Detect loop closures by space
+    RGBD/ProximityMaxGraphDepth: "0"        # Unlimited graph depth
+    RGBD/ProximityPathMaxNeighbors: "10"    # Max neighbors in proximity detection
+    RGBD/AngularUpdate: "0.1"               # Minimum angular motion (rad)
+    RGBD/LinearUpdate: "0.1"                # Minimum linear motion (m)
+    RGBD/OptimizeFromGraphEnd: "false"      # Optimize from latest node
+    RGBD/OptimizeMaxError: "3.0"            # Maximum error for optimization
+    RGBD/LocalRadius: "10"                  # Local map radius (m)
+    RGBD/CreateOccupancyGrid: "true"        # Create 2D occupancy grid
+    
+    # Optimizer
+    Optimizer/Strategy: "2"                 # 0=TORO, 1=g2o, 2=GTSAM, 3=Ceres
+    Optimizer/Epsilon: "0.0001"             # Convergence epsilon
+    Optimizer/Iterations: "100"             # Maximum iterations
+    Optimizer/GravitySigma: "0.3"           # Gravity constraint (use with IMU)
+    
+    # Registration Strategy - ICP for Point Clouds
+    Reg/Strategy: "1"                       # 0=Vis, 1=Icp, 2=VisIcp
+    Reg/Force3DoF: "false"                  # Allow full 6DoF (drone can pitch/roll)
+    
+    # =============================================================================
+    # ICP Parameters (Point Cloud Registration)
+    # =============================================================================
+    
+    Icp/Strategy: "1"                       # 0=PCL-ICP, 1=libpointmatcher, 2=CCCoreLib
+    Icp/VoxelSize: "0.05"                   # Voxel size for downsampling (m)
+    Icp/MaxCorrespondenceDistance: "0.2"    # Max distance for correspondences (m)
+    Icp/MaxTranslation: "0.5"               # Max translation accepted (m)
+    Icp/MaxRotation: "1.57"                 # Max rotation accepted (rad) ~90 deg
+    Icp/Iterations: "30"                    # Maximum ICP iterations
+    Icp/Epsilon: "0.001"                    # Convergence epsilon
+    Icp/CorrespondenceRatio: "0.3"          # Min ratio of correspondences
+    Icp/PointToPlane: "true"                # Use point-to-plane ICP
+    Icp/PointToPlaneK: "5"                  # K neighbors for normal estimation
+    Icp/PointToPlaneMinComplexity: "0.02"   # Min complexity for point-to-plane
+    Icp/OutlierRatio: "0.85"                # Outlier ratio
+    Icp/RangeMax: "6.0"                     # Max range (match TOF sensor)
+    Icp/RangeMin: "0.2"                     # Min range
+    
+    # =============================================================================
+    # Grid Map Configuration
+    # =============================================================================
+    
+    Grid/Sensor: "0"                        # 0=scan input (3D point cloud via "scan" topic)
+    Grid/3D: "true"                         # Create 3D occupancy grid
+    Grid/FromDepth: "false"                 # Not using depth images
+    Grid/RayTracing: "false"                # Disable ray tracing (would need OctoMap)
+    Grid/CellSize: "0.05"                   # Cell size (meters)
+    Grid/RangeMax: "6.0"                    # Maximum range (meters) - match TOF
+    Grid/RangeMin: "0.2"                    # Minimum range (meters)
+    Grid/ClusterRadius: "1.0"               # Cluster radius for filtering
+    Grid/GroundIsObstacle: "false"          # Don't mark ground as obstacle (for drones)
+    Grid/MaxObstacleHeight: "2.0"           # Maximum obstacle height
+    Grid/MaxGroundHeight: "0.1"             # Maximum ground height
+    Grid/MaxGroundAngle: "45"               # Max angle from horizontal for ground
+    Grid/NormalsSegmentation: "true"        # Segment ground from obstacles
+    Grid/NormalK: "20"                      # K neighbors to compute normals
+    Grid/PreVoxelFiltering: "true"          # Pre-filter with voxel grid
+    Grid/NoiseFilteringRadius: "0.1"        # Noise filtering radius
+    Grid/NoiseFilteringMinNeighbors: "5"    # Min neighbors for noise filtering             # Ray tracing (requires OctoMap)
+    Grid/MapFrameProjection: "false"        # Project in robot frame
+    
+    # Point Cloud Settings
+    cloud_voxel_size: "0.02"                # Voxel size for map cloud downsampling
+    cloud_decimation: "1"                   # Decimation (1=no decimation)
+    cloud_max_depth: "6.0"                  # Maximum depth for cloud
+    cloud_min_depth: "0.2"                  # Minimum depth for cloud
+    
+    # =============================================================================
+    # Loop Closure Detection (Using ICP only, no visual features)
+    # =============================================================================
+    
+    # Since we're using only point clouds (no camera images),
+    # loop closure is done via ICP matching
+    RGBD/LoopClosureReextractFeatures: "false"
+    RGBD/ProximityAngle: "45"               # Max angle for proximity detection (deg)
+    
+    # =============================================================================
+    # Localization mode parameters
+    # =============================================================================
+    
+    Mem/LocalizationDataSaved: "false"      # Don't save new data in localization mode
+    
+    # =============================================================================
+    # Tuning Tips for TOF Point Clouds:
+    # =============================================================================
+    # 
+    # If map is too sparse:
+    # - Decrease: Grid/CellSize to 0.02
+    # - Decrease: Icp/VoxelSize to 0.02
+    # - Decrease: cloud_voxel_size to 0.01
+    # 
+    # If ICP fails to converge:
+    # - Increase: Icp/MaxCorrespondenceDistance to 0.3
+    # - Increase: Icp/OutlierRatio to 0.90
+    # - Decrease: Icp/CorrespondenceRatio to 0.2
+    # 
+    # If too slow:
+    # - Increase: Icp/VoxelSize to 0.1
+    # - Increase: Grid/CellSize to 0.1
+    # - Decrease: Icp/Iterations to 20
+    # - Set: Rtabmap/DetectionRate to 2
+    # 
+    # If drift is too high:
+    # - Decrease: RGBD/LinearUpdate to 0.05
+    # - Decrease: RGBD/AngularUpdate to 0.05
+    # - Increase: RGBD/ProximityPathMaxNeighbors to 15
+    # 
+    # =============================================================================

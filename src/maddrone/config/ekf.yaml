@@ -1,3 +1,10 @@
+# =============================================================================
+# EKF Configuration
+# =============================================================================
+# Fuses QVIO + IMU for smooth odometry estimates.
+# TF is handled by scanmatcher (map->base_link), so publish_tf is FALSE here.
+# =============================================================================
+
 ekf_filter_node:
   ros__parameters:
     frequency: 30.0
@@ -10,6 +17,7 @@ ekf_filter_node:
     print_diagnostics: true
     debug: false
     
+    # IMPORTANT: Scanmatcher handles TF, not EKF
     publish_tf: true
     publish_acceleration: false
     
@@ -21,22 +29,21 @@ ekf_filter_node:
     # QVIO odometry input
     odom0: /qvio_enu
     odom0_config: [true,  true,  true,    # x, y, z position
-                   true,  true,  true,   # roll, pitch, yaw orientation  
+                   true,  true,  true,    # roll, pitch, yaw orientation  
                    true,  true,  true,    # x, y, z velocity
-                   true,  true,  true,   # roll, pitch, yaw velocity
-                   true,  true,  true]   # x, y, z acceleration
+                   true,  true,  true,    # roll, pitch, yaw velocity
+                   true,  true,  true]    # x, y, z acceleration
     odom0_differential: false
     odom0_relative: false
     odom0_queue_size: 10
-
     
     # IMU input 
     imu0: /imu_apps
     imu0_config: [false, false, false,
-                  true, true, true,    # roll, pitch, yaw orientation
-                  true, true, true,
-                  false, false, false,    # angular velocities
-                  true, true, true]   
+                  true,  true,  true,     # orientation
+                  true,  true,  true,
+                  false, false, false,
+                  true,  true,  true]   
     imu0_differential: false
     imu0_relative: false
     imu0_queue_size: 10
